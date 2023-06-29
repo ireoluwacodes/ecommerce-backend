@@ -36,6 +36,7 @@ class AuthController {
       console.log(error);
     }
   }
+
   async loginAuth(req, res, next) {
     const { email, password } = req.body;
     if (!email || !password) {
@@ -55,12 +56,15 @@ class AuthController {
         status: "success",
         message: "Login Successfully",
       });
+      
     } else {
       return res.status(401).json({
         message: "User does not Exist",
       });
     }
   }
+
+
 }
 
 export { AuthController };
