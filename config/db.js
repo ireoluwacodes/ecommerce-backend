@@ -1,4 +1,4 @@
-import { connect } from "mongoose";
+const { connect } = require("mongoose");
 
 const selectDB = () => {
   if (process.env.NODE_ENV !== "prodution") return process.env.LOCAL_MONGO_URL;
@@ -16,6 +16,6 @@ const createDB = async () => {
   }
 };
 
-export {
+module.exports = {
   createDB
 }
