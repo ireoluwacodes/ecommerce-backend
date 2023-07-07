@@ -24,6 +24,9 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    passwordUpdatedAt: {
+      type: Date,
+    },
     isAdmin: {
       type: Boolean,
       default: false,

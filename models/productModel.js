@@ -32,11 +32,12 @@ const productSchema = new mongoose.Schema(
     },
     quantity: {
       type: Number,
-      required : true,
+      required: true,
     },
     sold: {
       type: Number,
       default: 0,
+      // select: false,         //used to hide a property from being sent in the response
     },
     images: {
       type: Array,

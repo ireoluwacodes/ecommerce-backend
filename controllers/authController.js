@@ -1,10 +1,12 @@
 const asyncHandler = require("express-async-handler");
+const nodemailer = require("nodemailer");
 
 const { User } = require("../models/userModel.js");
 const { hashPassword, comparePassword } = require("../utils/managePass.js");
 const { genToken, verifyToken } = require("../config/signToken.js");
 const { validateDbId } = require("../utils/validateMongoId.js");
 const { genRefreshToken } = require("../config/refreshToken.js");
+const { transporter, mailOptions } = require("../utils/mailer.js");
 
 // User Registration
 const registerAuth = asyncHandler(async (req, res) => {
@@ -29,9 +31,20 @@ const registerAuth = asyncHandler(async (req, res) => {
       hash: hashed,
     });
 
+    // sign id into token
+    const token = await genToken(newUser._id);
+
+    // send mail to verify
+    const url = `Tap the link to verify your email.  <a href='${process.env.MAIL_URL}/auth/verify-me/${token}'>Click Here</a>`;
+
+    let mailOption = await mailOptions(email, "Verify Your Email", url);
+    const info = await transporter.sendMail(mailOption);
+    console.log(info.response);
+
     return res.status(200).json({
       status: "success",
       message: `User ${newUser.firstName} created successfully`,
+      token,
     });
   } catch (error) {
     throw new Error(error);
@@ -47,6 +60,13 @@ const loginAuth = asyncHandler(async (req, res, next) => {
     }
     const findUser = await User.findOne({ email });
     if (findUser) {
+      if (!findUser.isVerified) throw new Error("Please Verify Your Email");
+
+      if (findUser.isBlocked)
+        throw new Error(
+          "Your Account Has Been BLOCKED. Please contact Admin if you think this was a mistake"
+        );
+
       const validateUser = await comparePassword(password, findUser.hash);
       if (!validateUser) {
         throw new Error("Incorrect Credentials");
@@ -127,6 +147,111 @@ const logOut = asyncHandler(async (req, res) => {
     secure: true,
   });
   return res.sendStatus(204);
+});
+
+// Forgot Password
+const forgotPassword = asyncHandler(async (req, res) => {
+  const { email } = req.body;
+  if (!email) throw new Error("Please enter Alll fields");
+  try {
+    const findUser = await User.findOne({ email });
+    if (!findUser) throw new Error("User does not exist");
+
+    const token = await genToken(findUser._id);
+    console.log(token);
+    // Send your mail
+    const url = `Tap the link to reset your email.  <a href='${process.env.MAIL_URL}/auth/reset/${token}'>Click Here</a>`;
+
+    let mailOption = await mailOptions(email, "Reset Password Link", url);
+    const info = await transporter.sendMail(mailOption);
+    console.log(info.response);
+    // end
+    return res.status(200).json({
+      message: "Check mail for reset link",
+    });
+  } catch (error) {
+    throw new Error(error);
+  }
+});
+
+// Reset Password
+const resetPassword = asyncHandler(async (req, res) => {
+  try {
+    const { token } = req.params;
+    if (!token) throw new Error("Unauthorized");
+
+    const { password } = req.body;
+    if (!password) throw new Error("Please enter all fields");
+
+    const id = await verifyToken(token);
+    if (!id) throw new Error("Invalid Token");
+
+    await validateDbId(id);
+    const hash = await hashPassword(password);
+
+    const updatedUser = await User.findByIdAndUpdate(id, {
+      hash,
+      passwordUpdatedAt: Date.now(),
+    });
+
+    return res.status(200).json({
+      status: "success",
+      message: "Password reset sucessfully",
+    });
+  } catch (error) {
+    throw new Error(error);
+  }
+});
+
+// Change Password
+const changePassword = asyncHandler(async (req, res) => {
+  const { id } = req.user;
+  try {
+    await validateDbId(id);
+
+    const { password, newPassword } = req.body;
+    const FindUser = await User.findById(id);
+
+    const compare = await comparePassword(password, FindUser.hash);
+
+    if (compare) {
+      const newHash = await hashPassword(newPassword);
+
+      FindUser.hash = newHash;
+      FindUser.passwordUpdatedAt = Date.now();
+      await FindUser.save();
+
+      return res.status(200).json({
+        message: "Password Changed",
+      });
+    } else {
+      throw new Error("Old password is incorrect");
+    }
+  } catch (error) {
+    throw new Error(error);
+  }
+});
+
+// Verify User
+const verifyUser = asyncHandler(async (req, res) => {
+  try {
+    const { token } = req.params;
+    if (!token) throw new Error("Unauthorized");
+
+    const id = await verifyToken(token);
+    if (!id) throw new Error("Invalid Token");
+    await validateDbId(id);
+
+    const updatedUser = await User.findByIdAndUpdate(id, {
+      isVerified: true,
+    });
+
+    return res.status(200).json({
+      message: "User Verified",
+    });
+  } catch (error) {
+    throw new Error(error);
+  }
 });
 
 // Update User Information
@@ -243,6 +368,10 @@ const unBlockUser = asyncHandler(async (req, res) => {
 module.exports = {
   registerAuth,
   loginAuth,
+  forgotPassword,
+  resetPassword,
+  verifyUser,
+  changePassword,
   getAllUsers,
   getUser,
   deleteUser,
