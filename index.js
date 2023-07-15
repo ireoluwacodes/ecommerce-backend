@@ -3,7 +3,7 @@ const express = require("express");
 const colors = require("colors");
 const cookieParser = require("cookie-parser");
 const morgan = require("morgan");
-const cors = require("cors")
+const cors = require("cors");
 
 require("dotenv").config();
 
@@ -16,6 +16,10 @@ const { notFound } = require("./middlewares/notFound.js");
 const { userRouter } = require("./routes/userRoute.js");
 const { errHandler } = require("./middlewares/errHandler.js");
 const { productRouter } = require("./routes/productRoute.js");
+const { blogRouter } = require("./routes/blogRoute.js");
+const { categoryRouter } = require("./routes/productCategoryRoute.js");
+const { brandRouter } = require("./routes/brandRoute.js");
+const { blogCategoryRouter } = require("./routes/blogCategoryRoute.js");
 
 const PORT = process.env.PORT;
 
@@ -29,6 +33,10 @@ app.get("/", (req, res) => {
 
 app.use("/api/auth", userRouter);
 app.use("/api/product", productRouter);
+app.use("/api/blog", blogRouter);
+app.use("/api/brand", brandRouter);
+app.use("/api/category", categoryRouter);
+app.use("/api/blog-category", blogCategoryRouter);
 
 app.use(notFound);
 app.use(errHandler);

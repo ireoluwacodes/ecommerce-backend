@@ -41,7 +41,8 @@ var blogSchema = new mongoose.Schema(
     ],
     image: {
       type: String,
-      default: " ",
+      default:
+        " https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQqwLjoPT3bZ9Zx5m5UH0-EdimFkMezl9aLTA&usqp=CAU",
     },
     author: {
       type: String,
