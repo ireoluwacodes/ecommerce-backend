@@ -3,6 +3,7 @@ const slugify = require("slugify");
 const { Product } = require("../models/productModel");
 const { validateDbId } = require("../utils/validateMongoId");
 const { User } = require("../models/userModel");
+const { cloudinaryUpload } = require("../utils/cloudinaryConfig");
 
 // create new product
 const createProduct = AsyncHandler(async (req, res) => {
@@ -245,6 +246,39 @@ const rating = AsyncHandler(async (req, res) => {
   }
 });
 
+// Upload a product image
+const uploadImage = AsyncHandler(async (req, res) => {
+  const { id } = req.params;
+  if (!id) throw new Error("invalid Parameters");
+  await validateDbId(id);
+  try {
+    const uploader = (path) => cloudinaryUpload(path, "images");
+    const urls = [];
+    const files = req.files; 
+    for (const file of files) {
+      const { path } = file;
+      newPath = await uploader(path);
+      urls.push(newPath);
+    }
+    const findProduct = await Product.findByIdAndUpdate(
+      id,
+      {
+        images: urls.map((file) => {
+          return file;
+        }),
+      },
+      { new: true }
+    );
+
+    return res.status(200).json({
+      message: "success",
+      findProduct,
+    });
+  } catch (error) {
+    throw new Error(error);
+  }
+});
+
 module.exports = {
   createProduct,
   getAllProducts,
@@ -253,4 +287,5 @@ module.exports = {
   deleteProduct,
   addToWishlist,
   rating,
+  uploadImage,
 };

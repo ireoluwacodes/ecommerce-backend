@@ -1,12 +1,12 @@
 const { json, urlencoded } = require("express");
 const express = require("express");
-const colors = require("colors");
 const cookieParser = require("cookie-parser");
 const morgan = require("morgan");
 const cors = require("cors");
 
 require("dotenv").config();
-
+ require("colors");
+ 
 const app = express();
 app.use(json());
 app.use(urlencoded({ extended: true }));
