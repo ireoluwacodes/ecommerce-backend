@@ -254,12 +254,13 @@ const uploadImage = AsyncHandler(async (req, res) => {
   try {
     const uploader = (path) => cloudinaryUpload(path, "images");
     const urls = [];
-    const files = req.files; 
+    const files = req.files;
     for (const file of files) {
       const { path } = file;
-      newPath = await uploader(path);
+      const newPath = await uploader(path);
       urls.push(newPath);
     }
+
     const findProduct = await Product.findByIdAndUpdate(
       id,
       {

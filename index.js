@@ -6,7 +6,7 @@ const cors = require("cors");
 
 require("dotenv").config();
  require("colors");
- 
+
 const app = express();
 app.use(json());
 app.use(urlencoded({ extended: true }));
@@ -28,8 +28,14 @@ app.use(cookieParser());
 app.use(morgan("dev"));
 app.use(cors());
 
+// Set EJS as the templating engine
+app.set('view engine', 'ejs');
+
+// Specify the views directory
+app.set('views', __dirname + '/views');
+
 app.get("/", (req, res) => {
-  res.send("Welcome to my ecommerce API");
+res.render("home")
 });
 
 app.use("/api/auth", userRouter);
