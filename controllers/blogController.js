@@ -1,4 +1,5 @@
 const asyncHandler = require("express-async-handler");
+const fs = require("fs")
 const { Blog } = require("../models/blogModel");
 const { User } = require("../models/userModel");
 const { validateDbId } = require("../utils/validateMongoId");
@@ -244,6 +245,7 @@ const uploadImage = asyncHandler(async (req, res) => {
       const { path } = file;
       const newPath = await uploader(path);
       urls.push(newPath);
+      fs.unlinkSync(path)
     }
 
     const findBlog = await Blog.findByIdAndUpdate(

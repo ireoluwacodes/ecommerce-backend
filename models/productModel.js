@@ -42,7 +42,6 @@ const productSchema = new mongoose.Schema(
     images: {
       type: Array,
     },
-
     color: {
       type: String,
       required: true,
